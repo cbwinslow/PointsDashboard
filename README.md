@@ -27,8 +27,11 @@ and Active Link of the current app can be found here:
 Future additions include:
 
 [ ] - Marcel Projection Models
+
 [ ] - Player Regression Graphing
+
 [ ] - Player Position appearances
+
 [ ] - player value above replacement based on league and team size
 
 
