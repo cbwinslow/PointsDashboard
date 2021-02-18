@@ -34,8 +34,8 @@ df.loc[df["Age_pit"].isnull(),'Age_pit'] = df['Age_bat']
 
 df.fillna(0, inplace=True)
 
-# df = df.drop('Unnamed: 0_bat', 1)
-# df = df.drop('Unnamed: 0_pit', 1)
+df = df.drop('Unnamed: 0_bat', 1)
+df = df.drop('Unnamed: 0_pit', 1)
 
 print(df.head())
 

@@ -23,18 +23,17 @@ server = app.server
 
 df = pd.read_csv("All_Stats.csv")
 
-df.Season_bat = pd.to_numeric(df.Season_bat)
+df.Season = pd.to_numeric(df.Season)
 
-df = df[df['Season_bat'] >= 2000]
+df = df[df['Season'] >= 2000]
 
-min_year = df.Season_bat.min()
-max_year = df.Season_bat.max()
+min_year = df.Season.min()
+max_year = df.Season.max()
 
-df['Points'] = 0
+df.insert(1, "Points", 0)
+#df['Points'] = 0
 
-dttable = ['Points','Season_bat','Name_bat','Age_bat','Team_bat','AB_bat','H_bat','1B_bat','2B_bat','3B_bat','HR_bat','R_bat','RBI_bat','BB_bat','IBB_bat','SB_bat','CS_bat','SO_bat','GS_pit','CG_pit','ShO_pit','W_pit','L_pit','SV_pit','BS_pit','IP_pit','SO_pit','H_pit','ER_pit','BB_pit','IBB_pit','HBP_pit','BK_pit','WP_pit']
-
-
+dttable = ['Points','Season','Name','Age','Team','AB','H_bat','1B','2B','3B','HR_bat','R_bat','RBI','BB_bat','IBB_bat','SB','CS','SO_bat','GS','CG','ShO','W','L','SV','BS','IP','SO_pit','H_pit','ER','BB_pit','IBB_pit','HBP_pit','BK','WP']
 
 print(df.head())
 
@@ -625,7 +624,7 @@ app.layout = html.Div([
                 ]),
 
             dbc.Row([
-                # X-Axis
+                # X-Axis / 
                 dbc.Col( [
 
 
@@ -638,13 +637,49 @@ app.layout = html.Div([
                                 {'label': column, 'value': column}
                                 for column in df.columns.unique()
                                 ],   
-                        value='AB_bat',
+                        value='AB',
                         placeholder="X-Axis",
                         multi=False,
                         clearable=False,
                     ),
-                    
+
                     ]),
+
+
+                    html.H6("Select Y-Axis:", style={'fontSize': 11}),
+                    # Select 'Y' Axis
+                    html.Div([
+                    dcc.Dropdown(
+                        id='dropdown_Y',
+                        options=[
+                                {'label': column, 'value': column}
+                                for column in df.columns.unique()
+                                ],   
+                        value='Points',
+                        placeholder="Y-Axis",
+                        multi=False,
+                        clearable=False,
+                    ),
+
+                    ]),
+
+                    html.H6("Color Grouping:", style={'fontSize': 11}),
+                    # Select Color Grouping
+                    html.Div([
+                    dcc.Dropdown(
+                        id='dropdown_Color',
+                        options=[
+                                {'label': column, 'value': column}
+                                for column in df.columns.unique()
+                                ],   
+                        value='Team',
+                        placeholder="Color",
+                        multi=False,
+                        clearable=False,
+                    ),
+
+                    ]),
+
                 ], width=3, style={'margin-left': '2%', 'margin-right': '1%'}),
 
                 # Sekect Teams
@@ -661,6 +696,26 @@ app.layout = html.Div([
                         placeholder="Select Teams"
                         ),
                     ]),
+
+                    html.H6("Select trendline:", style={'fontSize': 11}),
+                    # Select Facet
+                    html.Div([
+                    dcc.Dropdown(
+                        id='dropdown_trendline',
+                        options=[
+                                {'label': 'None', 'value': 'None'},
+                                {'label': 'ols', 'value': 'ols'},
+                                {'label': 'lowess', 'value': 'lowess'}
+                                ],   
+                        value=None,
+                        placeholder="trendline",
+                        multi=False,
+                        clearable=False,
+                    ),
+                    
+                    ]),
+
+
                 ], style={'margin-left': '1%', 'margin-right': '1%'}),
 
                 # Select Players
@@ -678,10 +733,33 @@ app.layout = html.Div([
                         ),
 
                     ]),
+
+                    html.H6("Select Facet:", style={'fontSize': 11}),
+                    # Select Facet
+                    html.Div([
+                    dcc.Dropdown(
+                        id='dropdown_facet',
+                        options=[
+                                {'label': 'None', 'value': 'None'},
+                                {'label': 'Season', 'value': 'Season'},
+                                {'label': 'Team', 'value': 'Team'},
+                                {'label': 'Age', 'value': 'Age'},
+                                {'label': 'Name', 'value': 'Name'}
+                                ],   
+                        value=None,
+                        placeholder="facet",
+                        multi=False,
+                        clearable=False,
+                    ),
+                    
+                    ]),
                     
                 ], style={'margin-left': '1%', 'margin-right': '2%'}),
 
             ]),
+
+
+
 
             ], width= 8, style={'margin-left': '0.5%', 'margin-right': '2%'}), # Center Graph
 
@@ -747,16 +825,16 @@ def player_options(Season, Player_Checkbox, Team_Checkbox, options):
     # print(Season[0])
     Smin = Season[0] # - From Range Slider
     Smax = Season[1] # - From Range Slider
-    dff = dff[(dff.Season_bat >= Smin) & (dff.Season_bat <= Smax)]
+    dff = dff[(dff.Season >= Smin) & (dff.Season <= Smax)]
 
 
     if Team_Checkbox == []:
         dff = dff
     else:
-        dff = dff[dff.Team_bat.apply(lambda x: any(item for item in Team_Checkbox if item in x))]
+        dff = dff[dff.Team.apply(lambda x: any(item for item in Team_Checkbox if item in x))]
 
 
-    playerList = dff.Name_bat.unique()
+    playerList = dff.Name.unique()
     # print(teamList)
 
     options = options=[
@@ -784,12 +862,12 @@ def team_options(Season, Player_Checkbox, Team_Checkbox, options):
     # print(Season[0])
     Smin = Season[0] # - From Range Slider
     Smax = Season[1] # - From Range Slider
-    dff = dff[(dff.Season_bat >= Smin) & (dff.Season_bat <= Smax)]
+    dff = dff[(dff.Season >= Smin) & (dff.Season <= Smax)]
 
 
 
 
-    TeamList = dff.Team_bat.unique()
+    TeamList = dff.Team.unique()
     # print(teamList)
 
     options = options=[
@@ -800,10 +878,13 @@ def team_options(Season, Player_Checkbox, Team_Checkbox, options):
     return options
 
 
+
 @app.callback(
     Output("scatter-plot", "figure"),  
     Output("datatable", "data"),  
     [Input(component_id='dropdown_X', component_property='value'),
+    Input(component_id='dropdown_Y', component_property='value'),
+    Input(component_id='dropdown_Color', component_property='value'),
     Input(component_id='Season',component_property='value'),
     Input(component_id='Player_Checkbox',component_property='value'),
     Input(component_id='Team_Checkbox',component_property='value'),
@@ -835,77 +916,80 @@ def team_options(Season, Player_Checkbox, Team_Checkbox, options):
     Input(component_id='IBB_Allow_p',component_property='value'),
     Input(component_id='HBP_Allow_p',component_property='value'),
     Input(component_id='BK_p',component_property='value'),
-    Input(component_id='WP_p',component_property='value')])
+    Input(component_id='WP_p',component_property='value'),
+    Input(component_id='dropdown_facet', component_property='value'),
+    Input(component_id='dropdown_trendline', component_property='value')])
 
-def Points(dropdown_X,Season,Player_Checkbox,Team_Checkbox,AB_p,H_p,Single_p,Double_p,Triple_p,HR_p,R_p,RBI_p,BB_p,IBB_p,
+def Points(dropdown_X,dropdown_Y,dropdown_Color,Season,Player_Checkbox,Team_Checkbox,AB_p,H_p,Single_p,Double_p,Triple_p,HR_p,R_p,RBI_p,BB_p,IBB_p,
 SB_p,CS_p,SO_p,GS_p,CG_p,ShO_p,W_p,L_p,SV_p,BS_p,IP_p,K_p,H_Allow_p,
-ER_Allow_p,BB_Allow_p,IBB_Allow_p,HBP_Allow_p,BK_p,WP_p):
+ER_Allow_p,BB_Allow_p,IBB_Allow_p,HBP_Allow_p,BK_p,WP_p,dropdown_facet,dropdown_trendline):
 
     dff = df
 
     # print(Season[0])
     Smin = Season[0] # - From Range Slider
     Smax = Season[1] # - From Range Slider
-    dff = dff[(dff.Season_bat >= Smin) & (dff.Season_bat <= Smax)]
+    dff = dff[(dff.Season >= Smin) & (dff.Season <= Smax)]
 
     if Player_Checkbox == []:
         dff = dff
     else:
-        dff = dff[dff.Name_bat.apply(lambda x: any(item for item in Player_Checkbox if item in x))]
+        dff = dff[dff.Name.apply(lambda x: any(item for item in Player_Checkbox if item in x))]
 
 
 
     if Team_Checkbox == []:
         dff = dff
     else:
-        dff = dff[dff.Team_bat.apply(lambda x: any(item for item in Team_Checkbox if item in x))]
+        dff = dff[dff.Team.apply(lambda x: any(item for item in Team_Checkbox if item in x))]
 
 
 
-    Total = ( (AB_p * dff['AB_bat']) +
+    Total = ( (AB_p * dff['AB']) +
         (H_p * dff['H_bat']) +
-        (Single_p * dff['1B_bat']) +
-        (Double_p * dff['2B_bat']) +
-        (Triple_p * dff['3B_bat']) +
+        (Single_p * dff['1B']) +
+        (Double_p * dff['2B']) +
+        (Triple_p * dff['3B']) +
         (HR_p * dff['HR_bat']) +
         (R_p * dff['R_bat']) +
-        (RBI_p * dff['RBI_bat']) +
+        (RBI_p * dff['RBI']) +
         (BB_p * dff['BB_bat']) +
         (IBB_p * dff['IBB_bat']) +
-        (SB_p * dff['SB_bat']) +
-        (CS_p * dff['CS_bat']) +
+        (SB_p * dff['SB']) +
+        (CS_p * dff['CS']) +
         (SO_p * dff['SO_bat']) +
-        (GS_p * dff['GS_pit']) +
-        (CG_p * dff['CG_pit']) +
-        (ShO_p * dff['ShO_pit']) +
-        (W_p * dff['W_pit']) +
-        (L_p * dff['L_pit']) +
-        (SV_p * dff['SV_pit']) +
-        (BS_p * dff['BS_pit']) +
-        (IP_p * dff['IP_pit']) +
+        (GS_p * dff['GS']) +
+        (CG_p * dff['CG']) +
+        (ShO_p * dff['ShO']) +
+        (W_p * dff['W']) +
+        (L_p * dff['L']) +
+        (SV_p * dff['SV']) +
+        (BS_p * dff['BS']) +
+        (IP_p * dff['IP']) +
         (K_p * dff['SO_pit']) +
         (H_Allow_p * dff['H_pit']) +
-        (ER_Allow_p * dff['ER_pit']) +
+        (ER_Allow_p * dff['ER']) +
         (BB_Allow_p * dff['BB_pit']) +
         (IBB_Allow_p * dff['IBB_pit']) +
         (HBP_Allow_p * dff['HBP_pit']) +
-        (BK_p * dff['BK_pit']) +
-        (WP_p * dff['WP_pit']) )
+        (BK_p * dff['BK']) +
+        (WP_p * dff['WP']) )
 
 
-    dff.Points = Total
+    dff.Points = Total.round(1)
+
 
 
     scatter = px.scatter(
-    dff, x=dropdown_X, y=dff.Points, 
-    color=dff.Team_bat, size=dff.AB_bat, marginal_y='histogram',
-    hover_data=[dff.Season_bat, dff.Name_bat, dff.Team_bat, dff.Age_bat])
+    dff, x=dropdown_X, y=dropdown_Y, trendline=dropdown_trendline, facet_col=dropdown_facet, facet_col_wrap=6,
+    color=dropdown_Color, marginal_y='histogram', 
+    hover_data=[dff.Season, dff.Name, dff.Team, dff.Age])
 
 
+    #scatter.add_trace(px.s)
 
 
-
-    table = dff[['Points','Season_bat','Name_bat','Age_bat','Team_bat','AB_bat','H_bat','1B_bat','2B_bat','3B_bat','HR_bat','R_bat','RBI_bat','BB_bat','IBB_bat','SB_bat','CS_bat','SO_bat','GS_pit','CG_pit','ShO_pit','W_pit','L_pit','SV_pit','BS_pit','IP_pit','SO_pit','H_pit','ER_pit','BB_pit','IBB_pit','HBP_pit','BK_pit','WP_pit']]
+    table = dff[['Points','Season','Name','Age','Team','AB','H_bat','1B','2B','3B','HR_bat','R_bat','RBI','BB_bat','IBB_bat','SB','CS','SO_bat','GS','CG','ShO','W','L','SV','BS','IP','SO_pit','H_pit','ER','BB_pit','IBB_pit','HBP_pit','BK','WP']]
 
     data = table.to_dict('records')
     
