@@ -12,6 +12,8 @@ import dash_html_components as html
 from dash.dependencies import Input, Output, State
 import dash_table
 import plotly.express as px #(need to pip install plotly==4.4.1)
+from scipy import stats
+import plotly.figure_factory as ff
 
 
 # you need to include __name__ in your Dash constructor if
@@ -31,9 +33,11 @@ min_year = df.Season.min()
 max_year = df.Season.max()
 
 df.insert(1, "Points", 0)
-#df['Points'] = 0
+df.insert(2, "Zscore", 0)
 
-dttable = ['Points','Season','Name','Age','Team','AB','H_bat','1B','2B','3B','HR_bat','R_bat','RBI','BB_bat','IBB_bat','SB','CS','SO_bat','GS','CG','ShO','W','L','SV','BS','IP','SO_pit','H_pit','ER','BB_pit','IBB_pit','HBP_pit','BK','WP']
+
+
+dttable = ['Points','Zscore','Season','Name','Age','Team','AB','H_bat','1B','2B','3B','HR_bat','R_bat','RBI','BB_bat','IBB_bat','SB','CS','SO_bat','GS','CG','ShO','W','L','SV','BS','IP','SO_pit','H_pit','ER','BB_pit','IBB_pit','HBP_pit','BK','WP']
 
 print(df.head())
 
@@ -826,14 +830,7 @@ app.layout = html.Div([
 
 
         ]), # End Points Row
-
-
-        # Empty
-        dbc.Row([
-
-
-
-        ]),
+        
 
         #DataTable
         dbc.Row([
@@ -867,6 +864,16 @@ app.layout = html.Div([
 
         ]),
 
+        # Zscore Histogram
+        dbc.Row([
+            dbc.Col([
+                dbc.Spinner(children=[
+
+                dcc.Graph(id="ZScore-plot", figure={},style={'width': '100%', 'height': '80vh'})
+                
+                ], size="lg", color="primary", type="grow", fullscreen=False,),
+            ]),
+        ]),
 
 
 
@@ -950,6 +957,7 @@ def team_options(Season, Player_Checkbox, Team_Checkbox, options):
 @app.callback(
     Output("scatter-plot", "figure"),  
     Output("datatable", "data"), 
+    Output("ZScore-plot", "figure"),  
     [Input(component_id='dropdown_X', component_property='value'),
     Input(component_id='dropdown_Y', component_property='value'),
     Input(component_id='dropdown_Color', component_property='value'),
@@ -1062,7 +1070,16 @@ ER_Allow_p,BB_Allow_p,IBB_Allow_p,HBP_Allow_p,BK_p,WP_p,dropdown_facet,dropdown_
 
     dff.Points = Total.round(1)
 
+    # Calculating Zscore on those selected
+    dff['Zscore'] = stats.zscore(dff['Points'], axis=0, ddof=0, nan_policy='propagate')
+    dff.Zscore = dff.Zscore.round(3)
 
+
+    #Creates a Zscore for 1B
+    PosTemp = pd.DataFrame()
+    PosTemp = dff[ dff['G_as_1B'] >= input_pos_appear ]
+    PosTemp['First_Zscore'] = stats.zscore(PosTemp['Points'], axis=0, ddof=0, nan_policy='propagate')
+    print(PosTemp.First_Zscore.head())
 
     scatter = px.scatter(
     dff, x=dropdown_X, y=dropdown_Y, trendline=dropdown_trendline, facet_col=dropdown_facet, facet_col_wrap=6,
@@ -1071,16 +1088,20 @@ ER_Allow_p,BB_Allow_p,IBB_Allow_p,HBP_Allow_p,BK_p,WP_p,dropdown_facet,dropdown_
 
 
 
-
-
-    table = dff[['Points','Season','Name','Age','Team','AB','H_bat','1B','2B','3B','HR_bat','R_bat','RBI','BB_bat','IBB_bat','SB','CS','SO_bat','GS','CG','ShO','W','L','SV','BS','IP','SO_pit','H_pit','ER','BB_pit','IBB_pit','HBP_pit','BK','WP']]
+    table = dff[['Points','Zscore','Season','Name','Age','Team','AB','H_bat','1B','2B','3B','HR_bat','R_bat','RBI','BB_bat','IBB_bat','SB','CS','SO_bat','GS','CG','ShO','W','L','SV','BS','IP','SO_pit','H_pit','ER','BB_pit','IBB_pit','HBP_pit','BK','WP']]
 
     data = table.to_dict('records')
-    
 
-    
 
-    return scatter, data
+
+    ZScore =  px.histogram(
+        dff, x="Zscore", y="Points", color=dropdown_Color, marginal='rug', opacity=0.50,
+        hover_data=[dff.Season, dff.Name, dff.Team, dff.Age])
+
+
+
+
+    return scatter, data, ZScore
 
 
 
