@@ -715,6 +715,34 @@ app.layout = html.Div([
                     
                     ]),
 
+                                        html.H6("Select Facet:", style={'fontSize': 11}),
+                    # Select Facet
+                    html.Div([
+                    dcc.Dropdown(
+                        id='dropdown_facet',
+                        options=[
+                                {'label': 'None', 'value': 'None'},
+                                {'label': 'Season', 'value': 'Season'},
+                                {'label': 'Team', 'value': 'Team'},
+                                {'label': 'Age', 'value': 'Age'},
+                                {'label': 'Name', 'value': 'Name'},
+                                {'label': 'League', 'value': 'lgID'},
+                                {'label': 'Bats', 'value': 'bats'},
+                                {'label': 'Throws', 'value': 'throws'},
+                                {'label': 'Division', 'value': 'divID'},
+                                {'label': 'Division Win', 'value': 'DivWin_team'},
+                                {'label': 'Wild Card Win', 'value': 'WCWin_team'},
+                                {'label': 'League Win', 'value': 'LgWin_team'},
+                                {'label': 'World Series Win', 'value': 'WSWin_team'}
+                                ],   
+                        value=None,
+                        placeholder="facet",
+                        multi=False,
+                        clearable=False,
+                    ),
+                    
+                    ]),
+
 
                 ], style={'margin-left': '1%', 'margin-right': '1%'}),
 
@@ -734,26 +762,58 @@ app.layout = html.Div([
 
                     ]),
 
-                    html.H6("Select Facet:", style={'fontSize': 11}),
-                    # Select Facet
+
+                    html.H6("Position Eligibility: "),
+
+                    # Select Position Eligibility
                     html.Div([
-                    dcc.Dropdown(
-                        id='dropdown_facet',
-                        options=[
-                                {'label': 'None', 'value': 'None'},
-                                {'label': 'Season', 'value': 'Season'},
-                                {'label': 'Team', 'value': 'Team'},
-                                {'label': 'Age', 'value': 'Age'},
-                                {'label': 'Name', 'value': 'Name'}
-                                ],   
-                        value=None,
-                        placeholder="facet",
-                        multi=False,
-                        clearable=False,
+                    dcc.Input(
+                        id='input_pos_appear',
+                        type='number',
+                        step=1,
+                        min=0,
+                        max=200,
+                        minLength=0,
+                        maxLength=3,
+                        value=20,
+                        debounce=False,
+                        placeholder='Position Eligibility',
+
+
                     ),
-                    
+                    ]),
+
+
+                    html.H6("Select Positions: "),
+
+                    # Select Positions
+                    html.Div([ 
+                    dcc.Dropdown(
+                        id='Positions_Checkbox',
+                        multi=True,
+                        options=[
+                                {'label': 'Pitcher', 'value': 'G_p'},
+                                {'label': 'Catcher', 'value': 'G_c'},
+                                {'label': '1st Baseman', 'value': 'G_as_1B'},
+                                {'label': '2nd Baseman', 'value': 'G_as_2B'},
+                                {'label': '3rd Baseman', 'value': 'G_as_3B'},
+                                {'label': 'ShortStop', 'value': 'G_as_SS'},
+                                {'label': 'Left Fielder', 'value': 'G_as_LF'},
+                                {'label': 'Center Fielder', 'value': 'G_as_CF'},
+                                {'label': 'Right Fielder', 'value': 'G_as_RF'},
+                                {'label': 'Outfielder', 'value': 'G_as_OF'},
+                                {'label': 'Pitch Hitter', 'value': 'G_as_PH'},
+                                {'label': 'Pitch Runner', 'value': 'G_as_pr'},
+                                {'label': 'Designated Hitter', 'value': 'G_as_DH'}
+                                ], 
+                        value = [],
+                        placeholder="Select Positions"
+                        ),
                     ]),
                     
+
+
+
                 ], style={'margin-left': '1%', 'margin-right': '2%'}),
 
             ]),
@@ -768,6 +828,14 @@ app.layout = html.Div([
         ]), # End Points Row
 
 
+        #Position Violin Graphs
+        dbc.Row([
+
+
+
+        ]),
+
+        #DataTable
         dbc.Row([
 
             # DataTable
@@ -881,7 +949,7 @@ def team_options(Season, Player_Checkbox, Team_Checkbox, options):
 
 @app.callback(
     Output("scatter-plot", "figure"),  
-    Output("datatable", "data"),  
+    Output("datatable", "data"), 
     [Input(component_id='dropdown_X', component_property='value'),
     Input(component_id='dropdown_Y', component_property='value'),
     Input(component_id='dropdown_Color', component_property='value'),
@@ -918,11 +986,13 @@ def team_options(Season, Player_Checkbox, Team_Checkbox, options):
     Input(component_id='BK_p',component_property='value'),
     Input(component_id='WP_p',component_property='value'),
     Input(component_id='dropdown_facet', component_property='value'),
-    Input(component_id='dropdown_trendline', component_property='value')])
+    Input(component_id='dropdown_trendline', component_property='value'),
+    Input(component_id='Positions_Checkbox',component_property='value'),
+    Input(component_id='input_pos_appear',component_property='value')])
 
 def Points(dropdown_X,dropdown_Y,dropdown_Color,Season,Player_Checkbox,Team_Checkbox,AB_p,H_p,Single_p,Double_p,Triple_p,HR_p,R_p,RBI_p,BB_p,IBB_p,
 SB_p,CS_p,SO_p,GS_p,CG_p,ShO_p,W_p,L_p,SV_p,BS_p,IP_p,K_p,H_Allow_p,
-ER_Allow_p,BB_Allow_p,IBB_Allow_p,HBP_Allow_p,BK_p,WP_p,dropdown_facet,dropdown_trendline):
+ER_Allow_p,BB_Allow_p,IBB_Allow_p,HBP_Allow_p,BK_p,WP_p,dropdown_facet,dropdown_trendline,Positions_Checkbox,input_pos_appear):
 
     dff = df
 
@@ -943,6 +1013,20 @@ ER_Allow_p,BB_Allow_p,IBB_Allow_p,HBP_Allow_p,BK_p,WP_p,dropdown_facet,dropdown_
     else:
         dff = dff[dff.Team.apply(lambda x: any(item for item in Team_Checkbox if item in x))]
 
+
+
+    # Player Positions
+    if Positions_Checkbox == []:
+        dff = dff
+    else:
+        PositionList = pd.DataFrame() # Clear List
+
+        for i in Positions_Checkbox:
+
+            PositionTemp = dff[ dff[i] >= input_pos_appear ]
+            PositionList = PositionList.append(PositionTemp, ignore_index=True)
+
+        dff = PositionList
 
 
     Total = ( (AB_p * dff['AB']) +
@@ -986,7 +1070,7 @@ ER_Allow_p,BB_Allow_p,IBB_Allow_p,HBP_Allow_p,BK_p,WP_p,dropdown_facet,dropdown_
     hover_data=[dff.Season, dff.Name, dff.Team, dff.Age])
 
 
-    #scatter.add_trace(px.s)
+
 
 
     table = dff[['Points','Season','Name','Age','Team','AB','H_bat','1B','2B','3B','HR_bat','R_bat','RBI','BB_bat','IBB_bat','SB','CS','SO_bat','GS','CG','ShO','W','L','SV','BS','IP','SO_pit','H_pit','ER','BB_pit','IBB_pit','HBP_pit','BK','WP']]
